@@ -41,3 +41,23 @@ Recompensa bônus de +0.5 ao comer uma fruta rapidamente.
 Punições:
 Penalidade de -0.5 se o número de passos exceder o limite.
 Penalidade reduzida de -0.02 ao se afastar da fruta.
+
+Removida a Condição de self.done por Demora:
+
+Penalidades por demora continuam (-0.1), mas o jogo não termina.
+Encerramento Apenas em Caso de Colisão:
+
+O jogo só é encerrado quando ocorre uma colisão (parede ou corpo).
+Penalidade Leve por Movimento Ineficiente:
+
+### Hotfix
+
+Removida a Condição de self.done por Demora.
+
+Penalidades por demora continuam (-0.1), mas o jogo não termina.
+Encerramento Apenas em Caso de Colisão.
+
+O jogo só é encerrado quando ocorre uma colisão (parede ou corpo).
+Penalidade Leve por Movimento Ineficiente:
+
+Penalidade por demora foi ajustada para ser de -0.1.

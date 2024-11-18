@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 class SnakeGame:
     def __init__(self, grid_size: int = 10):
         self.grid_size = grid_size
-        self.max_steps = grid_size * grid_size  # Limite máximo de passos antes de uma punição maior
+        self.max_steps = grid_size * grid_size  # Define um limite máximo de passos para penalidade
         self.reset()
 
     def reset(self):
@@ -26,11 +26,8 @@ class SnakeGame:
 
         # Penalidade leve para colisão com a parede (após tentar evitar)
         if self._is_wall_collision(new_head):
-            self.direction = self._safe_direction()
-            new_head = (head[0] + self.direction[0], head[1] + self.direction[1])
-            if self._is_wall_collision(new_head):
-                self.done = True
-                return self._get_state(), -1, self.done
+            self.done = True
+            return self._get_state(), -1, self.done
 
         # Penalidade para colisão com o corpo
         if self._is_body_collision(new_head):
@@ -56,18 +53,9 @@ class SnakeGame:
             else:
                 reward -= 0.02  # Penalidade leve por se afastar da fruta
 
-        # Recompensa por movimentos seguros
-        if not self._is_wall_collision(new_head) and not self._is_body_collision(new_head):
-            reward += 0.05
-
-        # Recompensa por alcançar posições perto da borda sem colidir
-        if new_head[0] in [0, self.grid_size - 1] or new_head[1] in [0, self.grid_size - 1]:
-            reward += 0.1  # Incentiva movimentos nas bordas de forma segura
-
-        # Penalização por demora excessiva
+        # Penalização por demora excessiva, sem encerrar o jogo
         if self.steps > self.max_steps:
-            reward -= 0.5
-            self.done = True
+            reward -= 0.1  # Penalidade leve, mas o jogo continua
 
         return self._get_state(), reward, self.done
 
@@ -86,15 +74,6 @@ class SnakeGame:
             food = (np.random.randint(self.grid_size), np.random.randint(self.grid_size))
             if food not in self.snake:
                 return food
-
-    def _safe_direction(self) -> tuple:
-        head = self.snake[0]
-        possible_directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-        for direction in possible_directions:
-            new_head = (head[0] + direction[0], head[1] + direction[1])
-            if not self._is_wall_collision(new_head) and not self._is_body_collision(new_head):
-                return direction
-        return self.direction
 
     def _change_direction(self, action: int) -> None:
         directions = [(-1, 0), (0, 1), (1, 0), (0, -1)]
@@ -122,5 +101,5 @@ class SnakeGame:
         plt.yticks([])
         plt.title(f"Score: {self.score}")
         plt.show(block=False)
-        plt.pause(0.1)
+        plt.pause(0.03)
         plt.clf()
