@@ -44,15 +44,6 @@ def save_gif(frames: List[np.ndarray], filename: str) -> None:
     ani.save(filename, writer="pillow", fps=10)
 
 
-def save_structure(agent_name: str, model_path: str) -> None:
-    structure_file = f"plots/{agent_name.replace(' ', '_')}_structure.json"
-    with open(model_path, "r") as f:
-        model_data = f.read()
-
-    with open(structure_file, "w") as f:
-        f.write(model_data)
-
-
 def plot_scores(agent_name: str, scores: List[int]) -> None:
     episodes = range(1, len(scores) + 1)
     moving_avg = np.convolve(scores, np.ones(10) / 10, mode="valid")
@@ -101,7 +92,6 @@ for agent in agents:
             gif_filename = f"gif/{agent['name'].replace(' ', '_')}.gif"
             save_gif(frames, gif_filename)
 
-        save_structure(agent["name"], agent["model"])
         plot_scores(agent["name"], scores)
 
 agent_names, times = zip(*execution_times)
@@ -112,4 +102,4 @@ plt.ylabel("Tempo de execução (s)")
 plt.title("Tempo de execução dos agentes")
 plt.xticks(rotation=45, ha="right")
 plt.tight_layout()
-plt.savefig("plots/execution_times.png")
+plt.savefig("plots/execution_time.png")
