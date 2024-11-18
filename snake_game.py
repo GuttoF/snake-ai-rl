@@ -20,13 +20,11 @@ class SnakeGame:
         self._change_direction(action)
         head = self.snake[0]
         new_head = (head[0] + self.direction[0], head[1] + self.direction[1])
+        initial_distance = self._distance_to_food(head)
 
         if self._is_wall_collision(new_head):
-            # Tenta evitar colisão redirecionando
             self.direction = self._safe_direction()
             new_head = (head[0] + self.direction[0], head[1] + self.direction[1])
-
-            # Se mesmo assim colidir, termina o jogo
             if self._is_wall_collision(new_head):
                 self.done = True
                 return self._get_state(), -2, self.done
@@ -37,53 +35,58 @@ class SnakeGame:
 
         self.snake.appendleft(new_head)
         reward = -0.1
+
         if new_head == self.food:
             self.score += 1
             reward = 1
             self.food = self._place_food()
         else:
             self.snake.pop()
+            final_distance = self._distance_to_food(new_head)
+            if final_distance < initial_distance:
+                reward += 0.1  # Pequena recompensa por se aproximar da fruta
+            else:
+                reward -= 0.1  # Penalidade por se afastar da fruta
 
         return self._get_state(), reward, self.done
 
-    def _is_wall_collision(self, position):
+    def _distance_to_food(self, position: tuple) -> float:
+        return np.sqrt((position[0] - self.food[0]) ** 2 + (position[1] - self.food[1]) ** 2)
+
+    def _is_wall_collision(self, position: tuple) -> bool:
         x, y = position
         return x < 0 or x >= self.grid_size or y < 0 or y >= self.grid_size
 
-    def _is_body_collision(self, position):
+    def _is_body_collision(self, position: tuple) -> bool:
         return position in self.snake
 
-    def _place_food(self):
+    def _place_food(self) -> tuple:
         while True:
             food = (np.random.randint(self.grid_size), np.random.randint(self.grid_size))
             if food not in self.snake:
                 return food
 
-    def _safe_direction(self):
-        """Retorna uma direção segura para evitar colisões"""
+    def _safe_direction(self) -> tuple:
         head = self.snake[0]
         possible_directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         for direction in possible_directions:
             new_head = (head[0] + direction[0], head[1] + direction[1])
             if not self._is_wall_collision(new_head) and not self._is_body_collision(new_head):
                 return direction
-        return self.direction  # Mantém a direção atual se não encontrar alternativas
+        return self.direction
 
-    def _change_direction(self, action):
+    def _change_direction(self, action: int) -> None:
         directions = [(-1, 0), (0, 1), (1, 0), (0, -1)]
         proposed_direction = directions[action]
-
-        # Evita mudar para a direção oposta imediatamente
         if (
             len(self.snake) > 1
             and (self.snake[1][0] - self.snake[0][0], self.snake[1][1] - self.snake[0][1])
             == (-proposed_direction[0], -proposed_direction[1])
         ):
             return
-
         self.direction = proposed_direction
 
-    def _get_state(self):
+    def _get_state(self) -> np.ndarray:
         state = np.zeros((self.grid_size, self.grid_size))
         for x, y in self.snake:
             state[x, y] = 1
