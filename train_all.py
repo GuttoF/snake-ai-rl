@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from typing import List, Tuple
 import numpy as np
+from snake_game import SnakeGame
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -42,6 +43,7 @@ def save_gif(frames: List[np.ndarray], filename: str) -> None:
 
     ani = FuncAnimation(fig, update, frames=frames, interval=100)
     ani.save(filename, writer="pillow", fps=10)
+    plt.close(fig)
 
 
 def plot_scores(agent_name: str, scores: List[int]) -> None:
@@ -50,7 +52,8 @@ def plot_scores(agent_name: str, scores: List[int]) -> None:
 
     plt.figure(figsize=(10, 6))
     plt.plot(episodes, scores, label="Score por episódio")
-    plt.plot(range(10, len(scores) + 1), moving_avg, label="Média Móvel")
+    if len(moving_avg) > 0:
+        plt.plot(range(10, len(scores) + 1), moving_avg, label="Média Móvel")
     plt.xlabel("Episódios")
     plt.ylabel("Score")
     plt.title(f"Desempenho do agente: {agent_name}")
@@ -58,6 +61,7 @@ def plot_scores(agent_name: str, scores: List[int]) -> None:
     plt.tight_layout()
     plot_file = f"plots/{agent_name.replace(' ', '_')}_scores.png"
     plt.savefig(plot_file)
+    plt.close()
 
 
 for agent in agents:
@@ -67,11 +71,23 @@ for agent in agents:
         frames: List[np.ndarray] = []
         scores: List[int] = []
 
-        for episode in range(args.episodes):
-            if args.render and episode >= args.episodes - 2:
-                frames.append(np.zeros((10, 10)))
+        env = SnakeGame(grid_size=10)
 
-            scores.append(np.random.randint(-10, 10))
+        for episode in range(args.episodes):
+            state = env.reset()
+            total_reward = 0
+            while True:
+                if args.render and episode >= args.episodes - 1:
+                    frames.append(env._get_state())
+
+                action = np.random.randint(4)
+                next_state, reward, done = env.step(action)
+                total_reward += reward
+
+                if done:
+                    break
+
+            scores.append(int(total_reward))
 
         cmd = [
             "python",
@@ -103,3 +119,5 @@ plt.title("Tempo de execução dos agentes")
 plt.xticks(rotation=45, ha="right")
 plt.tight_layout()
 plt.savefig("plots/execution_time.png")
+plt.close()
+print("Treinamento concluído!")
