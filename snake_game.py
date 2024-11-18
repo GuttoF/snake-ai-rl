@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 class SnakeGame:
     def __init__(self, grid_size: int = 10):
         self.grid_size = grid_size
+        self.max_steps = grid_size * grid_size  # Limite máximo de passos antes de uma punição maior
         self.reset()
 
     def reset(self):
@@ -14,6 +15,7 @@ class SnakeGame:
         self.direction = (0, 1)
         self.done = False
         self.score = 0
+        self.steps = 0  # Contador de passos desde a última fruta
         return self._get_state()
 
     def step(self, action: int):
@@ -22,31 +24,50 @@ class SnakeGame:
         new_head = (head[0] + self.direction[0], head[1] + self.direction[1])
         initial_distance = self._distance_to_food(head)
 
+        # Penalidade leve para colisão com a parede (após tentar evitar)
         if self._is_wall_collision(new_head):
             self.direction = self._safe_direction()
             new_head = (head[0] + self.direction[0], head[1] + self.direction[1])
             if self._is_wall_collision(new_head):
                 self.done = True
-                return self._get_state(), -2, self.done
+                return self._get_state(), -1, self.done
 
+        # Penalidade para colisão com o corpo
         if self._is_body_collision(new_head):
             self.done = True
-            return self._get_state(), -1, self.done
+            return self._get_state(), -0.5, self.done
 
         self.snake.appendleft(new_head)
-        reward = -0.1
+        self.steps += 1
+        reward = -0.01  # Penalidade leve por cada movimento
 
+        # Recompensas adicionais
         if new_head == self.food:
             self.score += 1
-            reward = 1
+            reward = 1  # Recompensa principal por comer a fruta
             self.food = self._place_food()
+            self.steps = 0  # Reseta o contador de passos após comer a fruta
+            reward += 0.5  # Recompensa adicional para incentivar comer frutas rapidamente
         else:
             self.snake.pop()
             final_distance = self._distance_to_food(new_head)
             if final_distance < initial_distance:
-                reward += 0.1  # Pequena recompensa por se aproximar da fruta
+                reward += 0.1  # Recompensa maior por se aproximar da fruta
             else:
-                reward -= 0.1  # Penalidade por se afastar da fruta
+                reward -= 0.02  # Penalidade leve por se afastar da fruta
+
+        # Recompensa por movimentos seguros
+        if not self._is_wall_collision(new_head) and not self._is_body_collision(new_head):
+            reward += 0.05
+
+        # Recompensa por alcançar posições perto da borda sem colidir
+        if new_head[0] in [0, self.grid_size - 1] or new_head[1] in [0, self.grid_size - 1]:
+            reward += 0.1  # Incentiva movimentos nas bordas de forma segura
+
+        # Penalização por demora excessiva
+        if self.steps > self.max_steps:
+            reward -= 0.5
+            self.done = True
 
         return self._get_state(), reward, self.done
 
