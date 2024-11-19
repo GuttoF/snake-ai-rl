@@ -5,6 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import argparse
 import json
+import torch
 
 from torch.utils.tensorboard import SummaryWriter  # type: ignore
 
@@ -37,10 +38,10 @@ if __name__ == "__main__":
         total_reward = 0
 
         while True:
-            action = agent.act(state)
+            action = agent.act(torch.from_numpy(state).float())
             next_state, reward, done = env.step(action)
             next_state = next_state.flatten()
-            agent.remember(state, action, reward, next_state, done)
+            agent.remember(state.tolist(), action, reward, next_state.tolist(), done)
             state = next_state
             total_reward += reward
 

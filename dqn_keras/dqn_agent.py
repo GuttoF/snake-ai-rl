@@ -1,8 +1,9 @@
-from tensorflow.keras.models import Sequential  # type: ignore
-from tensorflow.keras.layers import Dense, Flatten, Input  # type: ignore
-from tensorflow.keras.optimizers import Adam  # type: ignore
 import random
 from collections import deque
+
+from tensorflow.keras.layers import Dense, Input  # type: ignore
+from tensorflow.keras.models import Sequential  # type: ignore
+from tensorflow.keras.optimizers import Adam  # type: ignore
 
 
 class DQNAgentKeras:
@@ -18,12 +19,14 @@ class DQNAgentKeras:
         self.model = self._build_model()
 
     def _build_model(self):
-        model = Sequential([
-            Input(shape=(self.state_size,)),
-            Dense(128, activation="relu"),
-            Dense(128, activation="relu"),
-            Dense(self.action_size, activation="linear"),
-        ])
+        model = Sequential(
+            [
+                Input(shape=(self.state_size,)),
+                Dense(64, activation="relu"),
+                Dense(64, activation="relu"),
+                Dense(self.action_size, activation="linear"),
+            ]
+        )
         model.compile(optimizer=Adam(learning_rate=self.learning_rate), loss="mse")
         return model
 

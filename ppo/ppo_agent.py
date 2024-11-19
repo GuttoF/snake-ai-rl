@@ -4,7 +4,9 @@ import torch.optim as optim
 
 
 class PPOAgent:
-    def __init__(self, state_size: int, action_size: int, lr: float = 0.001, gamma: float = 0.99):
+    def __init__(
+        self, state_size: int, action_size: int, lr: float = 0.001, gamma: float = 0.99
+    ):
         self.state_size = state_size
         self.action_size = action_size
         self.gamma = gamma
@@ -15,11 +17,13 @@ class PPOAgent:
     def _build_model(self) -> nn.Module:
         return nn.Sequential(
             nn.Flatten(),
-            nn.Linear(self.state_size, 128),
+            nn.Linear(self.state_size, 256),
             nn.ReLU(),
-            nn.Linear(128, 128),
+            nn.Linear(256, 256),
             nn.ReLU(),
-            nn.Linear(128, self.action_size),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, self.action_size),
             nn.Softmax(dim=-1),
         )
 

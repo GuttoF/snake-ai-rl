@@ -1,17 +1,25 @@
-import sys
-import os
 import argparse
+import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import json
+
+from tensorflow.keras.callbacks import TensorBoard  # type: ignore
+
 from dqn_keras.dqn_agent import DQNAgentKeras
 from snake_game import SnakeGame
-from tensorflow.keras.callbacks import TensorBoard # type: ignore
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--episodes", type=int, default=500, help="Número de episódios para o treinamento")
-parser.add_argument("--batch_size", type=int, default=32, help="Tamanho do batch para replay")
-parser.add_argument("--render", action="store_true", help="Renderizar o jogo nos últimos episódios")
+parser.add_argument(
+    "--episodes", type=int, default=500, help="Número de episódios para o treinamento"
+)
+parser.add_argument(
+    "--batch_size", type=int, default=32, help="Tamanho do batch para replay"
+)
+parser.add_argument(
+    "--render", action="store_true", help="Renderizar o jogo nos últimos episódios"
+)
 args = parser.parse_args()
 
 if __name__ == "__main__":
@@ -30,7 +38,9 @@ if __name__ == "__main__":
             action = agent.act(state.reshape(1, -1))
             next_state, reward, done = env.step(action)
             next_state = next_state.flatten()
-            agent.remember(state.reshape(1, -1), action, reward, next_state.reshape(1, -1), done)
+            agent.remember(
+                state.reshape(1, -1), action, reward, next_state.reshape(1, -1), done
+            )
             state = next_state
             total_reward += reward
 
@@ -38,7 +48,11 @@ if __name__ == "__main__":
                 env.render()
 
             if done:
-                print(f"Episode {episode + 1}/{episodes}, Score: {env.score}, Total Reward: {total_reward}")
+                print(
+                    f"Episode {episode + 1}/{episodes}, "
+                    f"Score: {env.score}, "
+                    f"Total Reward: {total_reward}"
+                )
                 break
 
         if len(agent.memory) > batch_size:
@@ -46,7 +60,7 @@ if __name__ == "__main__":
 
     def save_model_to_json(model, filename):
         weights = [w.tolist() for w in model.get_weights()]
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(weights, f)
 
     os.makedirs("saved_models", exist_ok=True)

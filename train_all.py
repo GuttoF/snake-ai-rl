@@ -1,30 +1,48 @@
-import sys
-import os
 import argparse
+import os
 import subprocess
+import sys
 import time
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 from typing import List, Tuple
+
+import matplotlib.pyplot as plt
 import numpy as np
+import torch
+from matplotlib.animation import FuncAnimation
+from torchviz import make_dot
+
 from snake_game import SnakeGame
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-parser = argparse.ArgumentParser(description="Treinar todos os agentes de RL para Snake")
-parser.add_argument("--episodes", type=int, default=500, help="Número de episódios para cada agente")
-parser.add_argument("--batch_size", type=int, default=32, help="Tamanho do batch para replay")
-parser.add_argument("--render", action="store_true", help="Renderizar o jogo nos últimos episódios")
+parser = argparse.ArgumentParser(
+    description="Treinar todos os agentes de RL para Snake"
+)
+parser.add_argument(
+    "--episodes", type=int, default=500, help="Número de episódios para cada agente"
+)
+parser.add_argument(
+    "--batch_size", type=int, default=32, help="Tamanho do batch para replay"
+)
+parser.add_argument(
+    "--render", action="store_true", help="Renderizar o jogo nos últimos episódios"
+)
 args = parser.parse_args()
 
 if args.episodes < 10:
-    print("O número mínimo de episódios é 10, será ajustado para 10")
     args.episodes = 10
 
 agents = [
-    {"name": "DQN com PyTorch", "path": "dqn_pytorch/train.py", "model": "dqn_pytorch/dqn_agent.py"},
-    {"name": "DQN com Keras", "path": "dqn_keras/train.py", "model": "dqn_keras/dqn_agent.py"},
-    {"name": "Double DQN com PyTorch", "path": "double_dqn/train.py", "model": "double_dqn/double_dqn_agent.py"},
+    {
+        "name": "DQN com PyTorch",
+        "path": "dqn_pytorch/train.py",
+        "model": "dqn_pytorch/dqn_agent.py",
+    },
+    {
+        "name": "Double DQN com PyTorch",
+        "path": "double_dqn/train.py",
+        "model": "double_dqn/double_dqn_agent.py",
+    },
     {"name": "PPO com PyTorch", "path": "ppo/train.py", "model": "ppo/ppo_agent.py"},
 ]
 
@@ -62,6 +80,20 @@ def plot_scores(agent_name: str, scores: List[int]) -> None:
     plot_file = f"plots/{agent_name.replace(' ', '_')}_scores.png"
     plt.savefig(plot_file)
     plt.close()
+
+
+def plot_neural_network(agent_name: str, model_path: str):
+    if not os.path.exists(model_path):
+        return
+
+    module_name, class_name = model_path.replace("/", ".").rsplit(".", 1)
+    model_class = getattr(__import__(module_name, fromlist=[class_name]), class_name)
+
+    model = model_class()
+    example_input = torch.rand(1, model.input_size)
+
+    graph = make_dot(model(example_input), params=dict(model.named_parameters()))
+    graph.render(f"plots/{agent_name.replace(' ', '_')}_network", format="png")
 
 
 for agent in agents:
@@ -109,6 +141,7 @@ for agent in agents:
             save_gif(frames, gif_filename)
 
         plot_scores(agent["name"], scores)
+        plot_neural_network(agent["name"], agent["model"])
 
 agent_names, times = zip(*execution_times)
 plt.figure(figsize=(10, 6))
@@ -120,4 +153,3 @@ plt.xticks(rotation=45, ha="right")
 plt.tight_layout()
 plt.savefig("plots/execution_time.png")
 plt.close()
-print("Treinamento concluído!")
